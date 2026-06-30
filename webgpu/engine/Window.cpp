@@ -213,6 +213,11 @@ void Window::paint(webgpu::Framebuffer* framebuffer, WGPUCommandEncoder command_
     }
 
     if (m_context->label_renderer() && m_context->shared_config().m_labels_enabled) {
+        // Florian: I am not 100% sure if this is actually the proper location for me to update the parameters here
+        // though
+        // if (m_context->label_renderer() && m_context->shared_config().m_labels_enabled)
+        m_context->label_renderer()->update(m_camera_config_ubo->data);
+
         m_context->label_renderer()->draw(
             command_encoder, m_camera_bind_group->handle(), framebuffer->color_texture_view(0).handle(), m_depth_texture_bind_group->handle());
     }
@@ -288,11 +293,6 @@ void Window::update_camera([[maybe_unused]] const nucleus::camera::Definition& n
     cc->distance_scaling_factor = new_definition.distance_scale_factor();
     m_camera_config_ubo->update_gpu_data(m_context->webgpu_ctx().queue());
     m_camera = new_definition;
-
-    //Florian: I am not 100% sure if this is actually the proper location for me to update the parameters here
-    //though 
-    if (m_context->label_renderer() && m_context->shared_config().m_labels_enabled)
-        m_context->label_renderer()->update(m_camera_config_ubo->data);
 
     emit update_requested();
 }
