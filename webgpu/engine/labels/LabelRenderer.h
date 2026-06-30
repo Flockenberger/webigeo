@@ -82,6 +82,8 @@ struct alignas(16) LabelParams {
 // to be able to switch to the different modes for comparison in performance etc
 enum LabelRenderMode : uint8_t { NAIVE_CPU = 0, NAIVE_GPU /*... more to be defined later when I get to it*/ };
 
+enum LabelType : uint8_t { PEAK = 0, PLACE, /* I guess more to be defined*/};
+
 class LabelRenderer : public QObject {
     Q_OBJECT
 
@@ -91,12 +93,15 @@ public:
 
         float label_scale = 0.6f;
         float px_range = 4.0f;
-        float anchor_height_offset_m = 200.0f;
-        float label_padding_px = 6.0f;
+        //This one is a bit tricky to get right (since the its the up on the earth so not screen up)
+        //I'll use the label_vertical_offset_px for that one instead, but need to keep that in mind
+        float anchor_height_offset_m = 0.0f;
+        float label_vertical_offset_px = 40.0f;
+        float label_padding_px = 16.0f;
         float occlusion_drop_threshold = 0.15f;
-        float outline_width_px = 0.4f;
+        float outline_width_px = 0.5f;
         float min_label_width_px = 18.0f;
-
+        
         //(very) naive temporal coherence
         bool temporal_coherence_enabled = false;
         float temporal_bias = 2000.0f;
@@ -109,7 +114,7 @@ public:
         float terrain_bias_m = 2.0f;
 
         glm::vec4 outline_color = { 0.0f, 0.0f, 0.0f, 1.0f };
-        glm::vec4 label_color = { 1.0f, 1.0f, 1.0f, 1.0f };
+        glm::vec4 label_color = { 1.0f, 0.0f, 0.0f, 1.0f };
         LabelRenderMode render_mode = NAIVE_CPU;
     };
 

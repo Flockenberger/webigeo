@@ -260,6 +260,7 @@ void LabelRenderer::load_csv(const std::filesystem::path& path)
             // if (queried.has_value())
             //     terrain_alt = queried.value();
             // }
+            name = name + " (" + std::to_string((uint32_t)alt) + "m)"; // workaround, will either directly embedd this in name or do this differently
             m_labels.push_back({ name, utf8_decode(name), lat, lon, alt, world_base, up });
         }
     }
@@ -353,6 +354,8 @@ void LabelRenderer::build_glyph_instances_naive_cpu(const uboCameraConfig& cam, 
 
     // First pass here we calculate the projected label positions
     for (const auto& label : m_labels) {
+
+        // Need to rethink if the anchor_height offset is even needed at all
         glm::dvec3 lifted_world = label.world_pos_base + label.up * (double)m_label_parameters.anchor_height_offset_m;
         glm::dvec3 local_pos_d = lifted_world - glm::dvec3(cam.position);
         glm::vec4 clip = vp * glm::vec4(glm::vec3(local_pos_d), 1.0f);
@@ -361,18 +364,19 @@ void LabelRenderer::build_glyph_instances_naive_cpu(const uboCameraConfig& cam, 
             continue;
 
         glm::vec3 ndc = glm::vec3(clip) / clip.w;
+
         if (ndc.x < -1.1f || ndc.x > 1.1f || ndc.y < -1.1f || ndc.y > 1.1f)
             continue;
 
-        glm::vec2 anchor { (ndc.x * 0.5f + 0.5f) * vp_size.x, (1.0f - (ndc.y * 0.5f + 0.5f)) * vp_size.y };
-
         float total_w = 0.0f, max_h = 0.0f;
+
         for (uint32_t cp : label.codepoints) {
             auto it = m_glyph_map.find(cp);
             if (it == m_glyph_map.end()) {
                 total_w += 8.0f * m_label_parameters.label_scale;
                 continue;
             }
+
             total_w += it->second.advance * m_label_parameters.label_scale;
             max_h = std::max(max_h, it->second.size.y * m_label_parameters.label_scale);
         }
@@ -380,12 +384,21 @@ void LabelRenderer::build_glyph_instances_naive_cpu(const uboCameraConfig& cam, 
         if (total_w <= 0.0f || max_h <= 0.0f)
             continue;
 
+        // TODO: While initially I thought this made sense... why would I remove small labels?
         if (total_w < m_label_parameters.min_label_width_px)
             continue;
 
         float depth = clip.w;
         float sort_depth = depth;
 
+        // TODO: Right now this is just sorted plainly by distance from camera
+        // eventually this should consider a scoring system (pre-computed partially)
+        // based on the current labels of the tiles.
+        // Based on that score should the sorting, and fading, be done
+        // this should allow for prominent labels/important labels
+        // to stay longer -> think about metrics what makes sense
+        // incidentally those should also either be excluded from distance fading
+        // or be influenced by it differently than just distance -> score fading?
         if (depth >= m_label_parameters.distance_fade_end_m)
             continue;
 
@@ -403,6 +416,7 @@ void LabelRenderer::build_glyph_instances_naive_cpu(const uboCameraConfig& cam, 
             sort_depth -= m_label_parameters.temporal_bias;
         }
 
+        glm::vec2 anchor { (ndc.x * 0.5f + 0.5f) * vp_size.x, (1.0f - (ndc.y * 0.5f + 0.5f)) * vp_size.y - m_label_parameters.label_vertical_offset_px };
         projected.push_back({ &label, anchor, depth, sort_depth, clip.z / clip.w, total_w, max_h, distance_fade });
     }
 
@@ -419,6 +433,9 @@ void LabelRenderer::build_glyph_instances_naive_cpu(const uboCameraConfig& cam, 
     for (const auto& proj : projected)
         target_alpha[proj.data] = 0.0f;
 
+    // Next step based on the previously sorted labels
+    // calculate the occlusions and filter out the "non visible"
+    // ie. partially/fully covered labels
     for (const auto& proj : projected) {
         const auto& label = *proj.data;
 
@@ -488,20 +505,27 @@ void LabelRenderer::build_glyph_instances_naive_cpu(const uboCameraConfig& cam, 
 
             occluded_area += ix * iy;
         }
+
         float occlusion = std::min(1.0f, occluded_area / label_area);
         if (occlusion >= m_label_parameters.occlusion_drop_threshold)
-            continue; // dropped — no terrain query wasted
+            continue;
 
         placed_rects.push_back(rect);
         visible_this_frame.insert(&label);
         target_alpha[&label] = proj.distance_fade;
     }
 
+    // This fade rate is nice in principle, but as soon as we do not move the camera anymore they get stuck since we dont repaint
+    // the window (by default)
     float fade_rate = (m_label_parameters.fade_duration_s > 0.001f) ? (1.0f / m_label_parameters.fade_duration_s) : 1000.0f;
     float max_delta = fade_rate * dt;
+
+    // I feel like this loop can still be improved quite a bit
+    // need to profile this more
     for (const auto& proj : projected) {
         const auto& label = *proj.data;
         float current_alpha = 0.0f;
+
         auto alpha_it = m_label_alpha.find(&label);
         if (alpha_it != m_label_alpha.end())
             current_alpha = alpha_it->second;
@@ -510,7 +534,7 @@ void LabelRenderer::build_glyph_instances_naive_cpu(const uboCameraConfig& cam, 
         current_alpha = move_towards(current_alpha, target, max_delta);
 
         if (current_alpha <= 0.001f && target <= 0.001f) {
-            m_label_alpha.erase(&label); // fully faded out — drop tracking
+            m_label_alpha.erase(&label); // fully faded out - drop tracking
             continue; // nothing to draw this frame
         }
         m_label_alpha[&label] = current_alpha;
@@ -520,18 +544,27 @@ void LabelRenderer::build_glyph_instances_naive_cpu(const uboCameraConfig& cam, 
 
         // Terrain query only for labels actually being drawn this frame
         double terrain_alt = label.csv_alt;
-        if (m_dataquerier) {
-            const auto queried = m_dataquerier->get_altitude({ label.lat, label.lon });
-            if (queried.has_value())
-                terrain_alt = queried.value();
-        }
+
+        // The idea was good, but man this is waaay to slow and I dont think it is worth it
+        // Keeping it here if we ever revisit this.
+        // Key idea why I even bothered with the dataquerier is that the dataset height
+        // differed from the terrain height which resulted in the labels being placed (mostly) inside
+        // the terrain, though with the px offset this is "mostly" fixed
+        // if (m_dataquerier) {
+        //     const auto queried = m_dataquerier->get_altitude({ label.lat, label.lon });
+        //     if (queried.has_value())
+        //         terrain_alt = queried.value();
+        //     else {
+        //         qDebug() << "[LabelRenderer] - DateQuerier did not have any height value for lat/lon: " << label.lat << ", " << label.lon;
+        //     }
+        // }
+
         double extra_lift = std::max(0.0, terrain_alt - label.csv_alt);
 
-        glm::dvec3 lifted_world = label.world_pos_base; 
-        /*+label.up*(extra_lift + (double)m_label_parameters.anchor_height_offset_m);*/
-        lifted_world.y += extra_lift + (double)m_label_parameters.anchor_height_offset_m;
+        glm::dvec3 lifted_world = label.world_pos_base + label.up * (extra_lift + (double)m_label_parameters.anchor_height_offset_m);
         glm::dvec3 local_pos_d = lifted_world - glm::dvec3(cam.position);
         glm::vec4 clip2 = vp * glm::vec4(glm::vec3(local_pos_d), 1.0f);
+
         float ndc_z = (clip2.w > 0.0f) ? clip2.z / clip2.w : proj.ndc_z;
         float view_dist = (float)glm::length(local_pos_d);
 

@@ -44,6 +44,9 @@ void LabelPanel::draw_panel()
         ImGui::SliderFloat("Anchor height offset (m)", &params.anchor_height_offset_m, 0.0f, 2000.0f, "%.0f");
         ImGui::SetItemTooltip("Lifts the label anchor above its world position along the local up vector, to avoid clipping into terrain.");
 
+        ImGui::SliderFloat("Label vertical offset (px)", &params.label_vertical_offset_px, 0.0f, 100.0f, "%.0f");
+        ImGui::SetItemTooltip("Pure screen-space nudge upward - does not affect 3D position or terrain occlusion.");
+
         ImGui::SeparatorText("Overlap handling");
 
         ImGui::SliderFloat("Label padding (px)", &params.label_padding_px, 0.0f, 30.0f, "%.0f");

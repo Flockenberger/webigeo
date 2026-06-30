@@ -74,18 +74,19 @@ fn fragmentMain(in: VertexOut) -> FragOut {
 	//Terrain depth occlusion
     let terrain_d = textureLoad(depth_texture, vec2i(in.position.xy), 0).r;
 
-    let ndc_xy = (in.position.xy / camera.viewport_size) * 2.0 - vec2f(1.0);
-    let recon_ndc = vec3f(ndc_xy.x, ndc_xy.y, 1-terrain_d);
+    //let ndc_xy = (in.position.xy / camera.viewport_size) * 2.0 - vec2f(1.0);
+    //let recon_ndc = vec3f(ndc_xy.x, ndc_xy.y, 1-terrain_d);
 
-    let local4    = camera.inv_view_proj_matrix * vec4f(recon_ndc, 1.0);
-    let local_pos = local4.xyz / local4.w;
-    let terrain_dist = length(local_pos);
+    //let local4    = camera.inv_view_proj_matrix * vec4f(recon_ndc, 1.0);
+    //let local_pos = local4.xyz / local4.w;
+    //let terrain_dist = -length(local_pos);
 
-    let occlusion_diff = terrain_dist - in.view_dist; // positive => terrain is closer = occluding
-    let eased_diff   = max(occlusion_diff - params.terrain_bias_m, 0.0);
-    let terrain_alpha = 1.0 - smoothstep(0.0, max(params.terrain_fade_range_m, 0.001), eased_diff);
+    //let occlusion_diff = terrain_dist - in.view_dist; // positive => terrain is closer = occluding
+    //let eased_diff   = max(occlusion_diff - params.terrain_bias_m, 0.0);
+    //let terrain_alpha = 1.0 - smoothstep(0.0, max(params.terrain_fade_range_m, 0.001), eased_diff);
+	let terrain_alpha = 1.0;
 	
-	//fade is nice, but kill the label when its behind a mountian
+	//fade is nice, but kill the label when its behind a mountian regardless
 	let bias = in.ndc_z * 0.002;
     if (in.ndc_z < terrain_d - bias) {
         discard;
