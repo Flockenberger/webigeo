@@ -167,6 +167,8 @@ void Context::internal_initialise()
         m_overlay_renderer->init(*this);
     if (m_track_renderer)
         m_track_renderer->init(webgpu_ctx());
+    if (m_label_renderer)
+        m_label_renderer->init(webgpu_ctx());
     // if (m_ortho_layer)
     //     m_ortho_layer->init();
 }
@@ -180,6 +182,7 @@ void Context::internal_destroy()
     m_cloud_renderer.reset();
     m_atmosphere_renderer.reset();
     m_tile_mesh_renderer.reset();
+    m_label_renderer.reset();
 }
 
 TileMeshRenderer* Context::tile_mesh_renderer() const { return m_tile_mesh_renderer.get(); }
@@ -220,6 +223,14 @@ void Context::set_track_renderer(std::shared_ptr<TrackRenderer> new_track_render
 {
     assert(!is_alive()); // only set before init is called.
     m_track_renderer = std::move(new_track_renderer);
+}
+
+LabelRenderer* Context::label_renderer() const { return m_label_renderer.get(); }
+
+void Context::set_label_renderer(std::shared_ptr<LabelRenderer> new_label_renderer)
+{
+    assert(!is_alive()); // only set before init is called.
+    m_label_renderer = std::move(new_label_renderer);
 }
 
 void Context::set_webgpu_ctx(webgpu::Context& ctx) { m_webgpu_ctx_ptr = &ctx; }

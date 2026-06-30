@@ -30,6 +30,7 @@ set(SOURCES
     cloud/CloudRenderer.h cloud/CloudRenderer.cpp
     track/TrackRenderer.h track/TrackRenderer.cpp
     atmosphere/AtmosphereRenderer.h atmosphere/AtmosphereRenderer.cpp
+	labels/LabelRenderer.h labels/LabelRenderer.cpp
     overlay/OverlayRenderer.h overlay/OverlayRenderer.cpp
     overlay/Overlay.h
     overlay/HeightLinesOverlay.h overlay/HeightLinesOverlay.cpp
@@ -37,6 +38,7 @@ set(SOURCES
     overlay/TextureOverlay.h overlay/TextureOverlay.cpp
     overlay/TileDebugOverlay.h overlay/TileDebugOverlay.cpp
     Context.h Context.cpp
+    
 )
 
 qt_add_library(webgpu_engine STATIC ${SOURCES})
@@ -83,6 +85,7 @@ qt_add_resources(webgpu_engine "shaders"
         "${SHADER_BASE_DIR}/screen_pass_vert.wgsl"
         "${SHADER_BASE_DIR}/render_clouds.wgsl"
         "${SHADER_BASE_DIR}/upscale_clouds.wgsl"
+		"${SHADER_BASE_DIR}/render_labels.wgsl"
 
         "${SHADER_BASE_DIR}/overlays/height_lines.wgsl"
         "${SHADER_BASE_DIR}/overlays/texture_overlay.wgsl"

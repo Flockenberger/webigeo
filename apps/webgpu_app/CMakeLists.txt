@@ -47,6 +47,7 @@ set(SOURCES
     atmosphere/AtmospherePanel.h atmosphere/AtmospherePanel.cpp
     cloud/CloudPanel.h cloud/CloudPanel.cpp
     track/TrackPanel.h track/TrackPanel.cpp
+    labels/LabelPanel.h labels/LabelPanel.cpp
 
     overlay/OverlaysPanel.h overlay/OverlaysPanel.cpp
     overlay/OverlayImGuiRenderer.h overlay/OverlayImGuiRenderer.cpp

@@ -137,6 +137,9 @@ void RenderingContext::initialize(webgpu::Context& ctx)
     m_engine_context->set_track_renderer(track_renderer);
     auto atmosphere_renderer = std::make_shared<webgpu_engine::AtmosphereRenderer>();
     m_engine_context->set_atmosphere_renderer(atmosphere_renderer);
+    auto label_renderer = std::make_shared<webgpu_engine::LabelRenderer>();
+    m_engine_context->set_label_renderer(label_renderer);
+    label_renderer->set_dataquerier(m_data_querier);
 
     connect(m_geometry_scheduler_holder.scheduler.get(),
         &nucleus::tile::GeometryScheduler::gpu_tiles_updated,
@@ -150,6 +153,8 @@ void RenderingContext::initialize(webgpu::Context& ctx)
         &nucleus::tile::Texture3DScheduler::gpu_tiles_updated,
         m_engine_context->cloud_renderer(),
         &webgpu_engine::CloudRenderer::update_gpu_tiles_cloud);
+    //TODO: Add Label Renderer here for tile updating (later)
+
     nucleus::utils::thread::async_call(m_geometry_scheduler_holder.scheduler.get(), [this]() { m_geometry_scheduler_holder.scheduler->set_enabled(true); });
 
     // TODO: texture compression

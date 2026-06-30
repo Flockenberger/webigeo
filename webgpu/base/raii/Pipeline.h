@@ -37,6 +37,16 @@ public:
         const VertexBufferInfos& vertex_buffer_infos, const FramebufferFormat& framebuffer_format, const BindGroupLayouts& bind_group_layouts,
         const std::vector<std::optional<WGPUBlendState>>& blend_states = {});
 
+    //Florian: Needed the explicit topology to not be hardcoded
+    GenericRenderPipeline(WGPUDevice device,
+        const ShaderModule& vertex_shader,
+        const ShaderModule& fragment_shader,
+        const VertexBufferInfos& vertex_buffer_infos,
+        const FramebufferFormat& framebuffer_format,
+        const BindGroupLayouts& bind_group_layouts,
+        const std::vector<std::optional<WGPUBlendState>>& blend_states,
+        WGPUPrimitiveTopology topology);
+
     const RenderPipeline& pipeline() const;
     const FramebufferFormat& framebuffer_format() const;
 

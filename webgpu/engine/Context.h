@@ -28,6 +28,8 @@
 #include "overlay/OverlayRenderer.h"
 #include "tile_mesh/TileMeshRenderer.h"
 #include "track/TrackRenderer.h"
+#include "labels/LabelRenderer.h"
+
 #include <webgpu/base/Context.h>
 
 namespace webgpu_engine {
@@ -55,6 +57,9 @@ public:
     TrackRenderer* track_renderer() const;
     void set_track_renderer(std::shared_ptr<TrackRenderer> new_track_renderer);
 
+    LabelRenderer* label_renderer() const;
+    void set_label_renderer(std::shared_ptr<LabelRenderer> new_label_renderer);
+
     webgpu::Context& webgpu_ctx() { return *m_webgpu_ctx_ptr; }
     void set_webgpu_ctx(webgpu::Context& ctx);
 
@@ -79,6 +84,7 @@ private:
     uboSharedConfig m_shared_config;
     std::shared_ptr<TileMeshRenderer> m_tile_mesh_renderer;
     std::shared_ptr<CloudRenderer> m_cloud_renderer;
+    std::shared_ptr<LabelRenderer> m_label_renderer;
     std::shared_ptr<AtmosphereRenderer> m_atmosphere_renderer;
     std::shared_ptr<OverlayRenderer> m_overlay_renderer;
     std::shared_ptr<TrackRenderer> m_track_renderer;

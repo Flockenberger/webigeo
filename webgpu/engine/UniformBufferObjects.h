@@ -40,6 +40,7 @@ public:
 
     uint32_t m_atmosphere_enabled = true;
     uint32_t m_clouds_enabled = true;
+    uint32_t m_labels_enabled = true;
     uint32_t m_shading_enabled = true;
     uint32_t m_normal_mode = 2; // 0...none, 1...per fragment, 2...FDM
 

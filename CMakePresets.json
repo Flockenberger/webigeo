@@ -9,7 +9,7 @@
     {
       "name": "msvc-base",
       "hidden": true,
-      "generator": "Ninja",
+      "generator": "Visual Studio 17 2022",
       "binaryDir": "${sourceDir}/build/${presetName}",
       "installDir": "${sourceDir}/install/${presetName}",
       "architecture": {
@@ -23,7 +23,7 @@
       "cacheVariables": {
         "CMAKE_C_COMPILER": "cl.exe",
         "CMAKE_CXX_COMPILER": "cl.exe",
-        "Qt6_DIR": "C:/Qt/6.10.1/msvc2022_64/lib/cmake/Qt6"
+        "Qt6_DIR": "C:/Qt/6.10.3/msvc2022_64/lib/cmake/Qt6"
       },
       "condition": {
         "type": "equals",
@@ -76,7 +76,7 @@
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/build/${presetName}",
       "installDir": "${sourceDir}/install/${presetName}",
-      "toolchainFile": "C:/Qt/6.10.1/wasm_multithread/lib/cmake/Qt6/qt.toolchain.cmake",
+      "toolchainFile": "C:/Qt/6.10.3/wasm_multithread/lib/cmake/Qt6/qt.toolchain.cmake",
       "environment": {
         "PATH": "C:/Qt/Tools/Ninja;$penv{PATH}",
         "EMSDK": "C:/tmp/alpinemaps/emsdk"
